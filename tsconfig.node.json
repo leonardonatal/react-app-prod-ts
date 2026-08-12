@@ -1,0 +1,20 @@
+{
+  // This tsconfig applies ONLY to Vite config files (vite.config.ts, etc.)
+  // It's separate from the app's tsconfig.json because config files run in
+  // Node.js, not the browser — they need Node types (like "node:url"),
+  // not DOM types. This is the standard Vite project setup.
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "strict": true,
+    // Tells TypeScript that Node built-in modules (node:url, node:path, etc.)
+    // are available — needed for the @/ path alias in vite.config.ts
+    "types": ["node"]
+  },
+  // Only applies to config files at the root, not src/
+  "include": ["vite.config.ts"]
+}

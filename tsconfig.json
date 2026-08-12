@@ -1,0 +1,52 @@
+{
+  "compilerOptions": {
+    // Compile to modern JS — Vite handles the browser polyfills
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+
+    // lib: what global APIs TypeScript knows about.
+    // DOM = browser APIs (document, window, fetch...)
+    // DOM.Iterable = lets you iterate NodeLists with for...of
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+
+    // ESNext modules — Vite handles bundling, not tsc
+    "module": "ESNext",
+
+    // Don't error on types inside node_modules (some packages have sloppy types)
+    "skipLibCheck": true,
+
+    // "bundler" = modern resolution that matches how Vite resolves imports
+    "moduleResolution": "bundler",
+
+    // Allows importing .ts/.tsx files with extensions (needed for bundler mode)
+    "allowImportingTsExtensions": true,
+
+    // Every file is its own module — no accidental globals leaking between files
+    "isolatedModules": true,
+    "moduleDetection": "force",
+
+    // tsc only type-checks, Vite does the actual transpiling — so no output files
+    "noEmit": true,
+
+    // JSX → React 17+ automatic transform (no need to import React in every file)
+    "jsx": "react-jsx",
+
+    // Strict mode: catches null/undefined bugs, implicit any, etc.
+    // This is non-negotiable on any real team
+    "strict": true,
+
+    // Fail on dead code — keeps the codebase clean
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // Path alias: "@/components/Foo" instead of "../../components/Foo"
+    // Must match the alias in vite.config.ts
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  // Only type-check files in src/ — vite.config.ts has its own tsconfig.node.json
+  "include": ["src"]
+}
