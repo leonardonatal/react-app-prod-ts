@@ -628,4 +628,49 @@ const { data: employees = [], isLoading, error } = useQuery({
 ```
 
 The service layer (`getEmployees`) stays identical.
-# react-app-prod-ts
+
+---
+
+## Loading & Error patterns — Manual vs Production
+
+`useEmployees.ts` handles loading/error locally (per hook). This is correct and readable for small apps. In production the pattern evolves in two steps:
+
+**Step 1 — Replace hook internals with TanStack Query**
+Eliminates the boilerplate `useState` + `useEffect` loop. You get caching, retries, and background refetching for free:
+
+```ts
+// Manual (what you have now) — write this once, fine
+export function useEmployees() {
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  // ... useEffect, cancelled flag, try/catch ...
+  return { employees, isLoading, error };
+}
+
+// TanStack Query — write this instead, scales to 10+ API calls
+export function useEmployees() {
+  return useQuery({
+    queryKey: ['employees'],  // cache key — same key = same cached data anywhere in the app
+    queryFn: getEmployees,    // the service function, unchanged
+  });
+}
+```
+
+**Step 2 — Add a global error boundary for unexpected failures**
+Local error state handles expected errors ("no results", "invalid input"). A global boundary catches unexpected ones (network down, 500, 401):
+
+```tsx
+// main.tsx — wraps the whole app, catches anything that slips through
+import { ErrorBoundary } from 'react-error-boundary';
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <ErrorBoundary fallback={<p>Something went wrong. Please refresh.</p>}>
+      <App />
+    </ErrorBoundary>
+  </StrictMode>
+);
+```
+
+The service layer (`getEmployees`) stays identical through all of this — that's the whole point of separating it.
