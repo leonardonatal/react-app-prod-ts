@@ -1,8 +1,89 @@
 # Employee Directory — How a Senior React Dev Builds This From Scratch
 
-> React 19 · TypeScript · Vite · Tailwind CSS
+> React 19 · TypeScript · Vite · Tailwind CSS · Vitest · React Testing Library
 
 ---
+
+## Running the app
+
+```bash
+npm install
+npm run dev        # http://localhost:5173
+```
+
+## Running tests
+
+```bash
+npm test           # watch mode — re-runs on file save
+npx vitest run    # single run (CI)
+npx vitest --ui   # visual browser UI for test results
+```
+
+**20 tests across 3 files:**
+
+| File | What it tests |
+|---|---|
+| `useEmployeeFilter.test.ts` | Hook logic — filtering, search, clear, department list |
+| `employeeService.test.ts` | Service layer — resolves data, returns a copy |
+| `components.test.tsx` | UI — renders correctly, responds to user interaction |
+
+---
+
+## Testing philosophy & tooling
+
+**Stack:**
+- **Vitest** — Vite-native test runner. Same config file as the app, no separate Jest config needed. Runs in `jsdom` (a fake browser environment) so React components can render without a real browser.
+- **React Testing Library** — mounts components into jsdom and queries them the way a user would: by text, role, label. Not by class name or internal state.
+- **`@testing-library/user-event`** — simulates real browser interactions (typing character by character, clicking, selecting) instead of firing synthetic events directly.
+- **`@testing-library/jest-dom`** — adds readable matchers: `toBeInTheDocument()`, `toHaveValue()`, `toBeDisabled()`, etc.
+
+**The golden rule: test what the user sees and does — not implementation details.**
+
+A bad test breaks every time you rename a CSS class or refactor internals, even if the UI looks and works exactly the same. A good test only breaks if the actual behavior changes.
+
+```ts
+// BAD — tests implementation detail (class name)
+expect(element.className).toContain('employee-item');
+
+// GOOD — tests what the user sees
+expect(screen.getByText('Alice Johnson')).toBeInTheDocument();
+```
+
+**Why the tests are structured this way:**
+
+`useEmployeeFilter.test.ts` — the hook has no JSX, so it's tested with `renderHook()` and `act()` directly — no component needed. This is only possible BECAUSE the logic was extracted into a hook instead of living inside a component. If it were inline in `App.tsx`, you'd have to render the entire app just to test a filter function.
+
+```ts
+const { result } = renderHook(() => useEmployeeFilter(mockEmployees));
+act(() => result.current.setSearchTerm('alice'));
+expect(result.current.filteredEmployees).toHaveLength(1);
+```
+
+`employeeService.test.ts` — the service is a plain async function, so it's tested like any async utility. `vi.mock()` replaces the real data import with a controlled fixture so the test isn't tied to whatever is in `data/employees.ts`.
+
+```ts
+vi.mock('@/data/employees', () => ({ employees: [...] }));
+const result = await getEmployees();
+expect(result).toHaveLength(2);
+```
+
+`components.test.tsx` — presentational components are tested by rendering them with props and asserting the DOM output. User interactions are tested with `userEvent` which fires real browser events (focus, keydown, input, keyup per character), not just a single synthetic change event.
+
+```ts
+// Render with a spy, type into the input, assert the spy was called
+const handleChange = vi.fn();
+render(<SearchBar value="" onChange={handleChange} />);
+await userEvent.type(screen.getByRole('textbox'), 'Ali');
+expect(handleChange).toHaveBeenCalledTimes(3);
+```
+
+**What's NOT tested here (and why):**
+
+- `EmployeeListItem` — it's a `React.memo` wrapper that renders two strings. No logic, no interaction. Testing it would just duplicate what `EmployeeList` tests already cover.
+- `App.tsx` — the full integration (fetch + filter + render) would be an integration/e2e test (Playwright, Cypress). Unit tests cover each layer in isolation; integration tests cover the wiring. For this project, the unit tests give enough coverage.
+- Internal state values — you never assert `result.current.searchTerm === 'alice'` to verify filtering works. You assert the *output* (`filteredEmployees.length === 1`). State is an implementation detail; behavior is the contract.
+
+
 
 ## Before touching the keyboard
 

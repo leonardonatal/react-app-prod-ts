@@ -41,9 +41,3 @@ export async function getEmployees(): Promise<Employee[]> {
 //   if (!response.ok) throw new Error('Failed to fetch employees');
 //   return response.json();
 // }
-
-// export async function getEmployees(): Promise<Employee[]> {
-//   const response = await fetch('/api/employees');
-//   if (!response.ok) throw new Error('Failed to fetch employees');
-//   return response.json();
-// }
